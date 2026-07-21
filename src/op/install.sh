@@ -66,7 +66,7 @@ fi
 # URL format is expected from official CLI2 history links, for example:
 # https://cache.agilebits.com/dist/1P/op2/pkg/v2.35.0/op_linux_amd64_v2.35.0.zip
 DOWNLOAD_URL=$(printf '%s\n' "$PRODUCT_HISTORY_PAGE" \
-    | grep -oE "https://cache\\.agilebits\\.com/dist/1P/op2/pkg/v[0-9A-Za-z._-]+/op_linux_${OP_ARCH}_v[0-9A-Za-z._-]+\\.zip" \
+    | grep -oE "https://cache\\.agilebits\\.com/dist/1P/op2/pkg/v[0-9]+\\.[0-9]+\\.[0-9]+/op_linux_${OP_ARCH}_v[0-9]+\\.[0-9]+\\.[0-9]+\\.zip" \
     | head -n 1)
 
 if [ -z "$DOWNLOAD_URL" ]; then
@@ -114,7 +114,6 @@ if ! getent group onepassword-cli > /dev/null; then
 fi
 
 # Setgid bit ensures op inherits onepassword-cli group permissions as required by 1Password.
-install -m 2755 op /usr/local/bin/op
-chgrp onepassword-cli /usr/local/bin/op
+install -m 2755 -g onepassword-cli op /usr/local/bin/op
 
 op --version
