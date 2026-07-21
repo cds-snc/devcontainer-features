@@ -54,7 +54,7 @@ case "$ARCH" in
         ;;
 esac
 
-TMP_DIR=$(mktemp -d)
+TMP_DIR=$(mktemp -d -t op-install.XXXXXX)
 trap 'rm -rf "$TMP_DIR"' EXIT
 cd "$TMP_DIR" || exit 1
 
