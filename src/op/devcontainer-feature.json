@@ -1,7 +1,7 @@
 {
     "name": "1Password CLI",
     "id": "op",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "description": "1Password CLI",
     "documentationURL": "https://developer.1password.com/docs/cli",
     "options": {
