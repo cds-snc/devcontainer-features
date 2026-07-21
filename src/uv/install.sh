@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Variables
-REPO_OWNER="astral-sh"
+REPO_OWNER="cds-snc"
 REPO_NAME="uv"
 BINARY_NAME="uv"
 

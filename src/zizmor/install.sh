@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Variables
-REPO_OWNER="zizmorcore"
+REPO_OWNER="cds-snc"
 REPO_NAME="zizmor"
 BINARY_NAME="zizmor"
 ZIZMOR_VERSION="${VERSION:-"latest"}"
