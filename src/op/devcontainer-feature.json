@@ -4,7 +4,14 @@
     "version": "1.0.0",
     "description": "1Password CLI",
     "documentationURL": "https://developer.1password.com/docs/cli",
-    "options": {},
+    "options": {
+
+        "version": {
+        "type": "string",
+        "default": "v2.35.0",
+        "description": "Version of 1Password CLI to install from GitHub releases e.g. v2.35.0 (with 'v' prefix)"
+        }
+    },
     "installsAfter": [
         "ghcr.io/devcontainers/features/common-utils"
     ]
