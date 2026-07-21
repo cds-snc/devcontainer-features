@@ -81,12 +81,18 @@ case "$DOWNLOAD_URL" in
         exit 1
         ;;
 esac
+DIRECTORY_VERSION=$(printf '%s\n' "$DOWNLOAD_URL" | sed -nE 's#.*/pkg/v([0-9]+\.[0-9]+\.[0-9]+)/op_linux_.*#\1#p')
+FILENAME_VERSION=$(printf '%s\n' "$DOWNLOAD_URL" | sed -nE 's#.*/op_linux_[^_]+_v([0-9]+\.[0-9]+\.[0-9]+)\.zip#\1#p')
+if [ -z "$DIRECTORY_VERSION" ] || [ "$DIRECTORY_VERSION" != "$FILENAME_VERSION" ]; then
+    echo "Invalid 1Password CLI release URL version format: $DOWNLOAD_URL"
+    exit 1
+fi
 
 if ! curl -fsSL --show-error "$DOWNLOAD_URL" -o op.zip; then
     echo "Failed to download 1Password CLI from: $DOWNLOAD_URL"
     exit 1
 fi
-if ! unzip -q op.zip; then
+if ! unzip -q op.zip op op.sig; then
     echo "Failed to extract 1Password CLI archive"
     exit 1
 fi
@@ -104,6 +110,7 @@ if [ "$KEY_RETRIEVED" = false ]; then
     exit 1
 fi
 
+# Signature validity is tied to the official 1Password signing key fingerprint above.
 if ! gpg --batch --verify op.sig op; then
     echo "GPG signature verification failed for 1Password CLI binary"
     exit 1
@@ -113,7 +120,7 @@ if ! getent group onepassword-cli > /dev/null; then
     groupadd onepassword-cli
 fi
 
-# Setgid ensures op runs with onepassword-cli group access required for secure credential store access.
+# 1Password recommends setgid with onepassword-cli so op can securely access its credential store.
 install -m 2755 -g onepassword-cli op /usr/local/bin/op
 
 op --version
