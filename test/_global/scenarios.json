@@ -1,0 +1,34 @@
+{
+    "uv-specific-version": {
+        "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+        "features": {
+            "uv": {
+                "version": "v0.4.23"
+            }
+        }
+    },
+    "zizmor-specific-version": {
+        "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+        "features": {
+            "zizmor": {
+                "version": "v1.23.1"
+            }
+        }
+    },
+    "rtk-specific-version": {
+        "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+        "features": {
+            "rtk": {
+                "version": "v0.38.0"
+            }
+        }
+    },
+    "ripgrep-specific-version": {
+        "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+        "features": {
+            "ripgrep": {
+                "version": "14.1.1"
+            }
+        }
+    }
+}
