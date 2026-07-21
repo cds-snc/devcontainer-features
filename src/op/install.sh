@@ -27,16 +27,101 @@ check_packages() {
 
 export DEBIAN_FRONTEND=noninteractive
 
-# Source /etc/os-release to get OS info
-. /etc/os-release
+ONEPASSWORD_GPG_KEY="3FEF9748469ADBE15DA7CA80AC2D62742012EA22"
+PRODUCT_HISTORY_URL="https://app-updates.agilebits.com/product_history/CLI2"
+KEYSERVERS="keyserver.ubuntu.com hkps://keys.openpgp.org"
 
 # Install dependencies
-check_packages apt-transport-https curl ca-certificates gnupg2 dirmngr
-# Import key safely (new 'signed-by' method rather than deprecated apt-key approach) and install
-curl -sSL https://downloads.1password.com/linux/keys/1password.asc | gpg --dearmor > /usr/share/keyrings/1password-archive-keyring.gpg
-echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/1password-archive-keyring.gpg] https://downloads.1password.com/linux/debian/$(dpkg --print-architecture) stable main" > /etc/apt/sources.list.d/1password.list
+check_packages apt-transport-https curl ca-certificates gnupg2 dirmngr unzip
 
-# Update lists
-apt-get update -yq
+ARCH="$(dpkg --print-architecture)"
+case "$ARCH" in
+    amd64)
+        OP_ARCH="amd64"
+        ;;
+    arm64)
+        OP_ARCH="arm64"
+        ;;
+    armhf)
+        OP_ARCH="arm"
+        ;;
+    i386)
+        OP_ARCH="386"
+        ;;
+    *)
+        echo "Unsupported architecture: $ARCH"
+        exit 1
+        ;;
+esac
 
-apt-get install -yq 1password-cli  || exit 1
+TMP_DIR=$(mktemp -d -t op-install.XXXXXX)
+trap 'rm -rf "$TMP_DIR"' EXIT
+cd "$TMP_DIR" || exit 1
+
+if ! PRODUCT_HISTORY_PAGE=$(curl -fsSL --show-error "$PRODUCT_HISTORY_URL"); then
+    echo "Unable to fetch 1Password CLI release history from: $PRODUCT_HISTORY_URL"
+    exit 1
+fi
+
+# The URL format follows the official CLI2 history link pattern, for example:
+# https://cache.agilebits.com/dist/1P/op2/pkg/v2.35.0/op_linux_amd64_v2.35.0.zip
+DOWNLOAD_URL=$(printf '%s\n' "$PRODUCT_HISTORY_PAGE" \
+    | grep -oE "https://cache\\.agilebits\\.com/dist/1P/op2/pkg/v[0-9]+\\.[0-9]+\\.[0-9]+/op_linux_${OP_ARCH}_v[0-9]+\\.[0-9]+\\.[0-9]+\\.zip" \
+    | head -n 1)
+
+if [ -z "$DOWNLOAD_URL" ]; then
+    echo "Unable to determine the latest 1Password CLI release URL for architecture: $OP_ARCH"
+    exit 1
+fi
+case "$DOWNLOAD_URL" in
+    https://cache.agilebits.com/*)
+        ;;
+    *)
+        echo "Unexpected 1Password CLI download URL: $DOWNLOAD_URL"
+        exit 1
+        ;;
+esac
+DIRECTORY_VERSION=$(printf '%s\n' "$DOWNLOAD_URL" | sed -nE 's#.*/pkg/v([0-9]+\.[0-9]+\.[0-9]+)/op_linux_.*#\1#p')
+FILENAME_VERSION=$(printf '%s\n' "$DOWNLOAD_URL" | sed -nE 's#.*/op_linux_[^_]+_v([0-9]+\.[0-9]+\.[0-9]+)\.zip#\1#p')
+if [ -z "$DIRECTORY_VERSION" ] || [ "$DIRECTORY_VERSION" != "$FILENAME_VERSION" ]; then
+    echo "Invalid 1Password CLI release URL version format: $DOWNLOAD_URL"
+    exit 1
+fi
+
+if ! curl -fsSL --show-error "$DOWNLOAD_URL" -o op.zip; then
+    echo "Failed to download 1Password CLI from: $DOWNLOAD_URL"
+    exit 1
+fi
+if ! unzip -q op.zip op op.sig; then
+    echo "Failed to extract 1Password CLI archive"
+    exit 1
+fi
+
+KEY_RETRIEVED=false
+for KEYSERVER in $KEYSERVERS; do
+    if gpg --batch --keyserver "$KEYSERVER" --receive-keys "$ONEPASSWORD_GPG_KEY"; then
+        KEY_RETRIEVED=true
+        break
+    fi
+done
+
+if [ "$KEY_RETRIEVED" = false ]; then
+    echo "Failed to retrieve 1Password GPG key from configured keyservers"
+    exit 1
+fi
+
+# Signature validity is tied to the official 1Password signing key fingerprint above.
+if ! gpg --batch --verify op.sig op; then
+    echo "GPG signature verification failed for 1Password CLI binary"
+    exit 1
+fi
+
+if ! getent group onepassword-cli > /dev/null; then
+    groupadd onepassword-cli
+fi
+
+# 1Password recommends setgid with onepassword-cli so op can securely access its credential store.
+install -m 0755 -g onepassword-cli op /usr/local/bin/op
+chmod 2755 /usr/local/bin/op
+
+op --version
