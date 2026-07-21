@@ -15,7 +15,7 @@ Recursively searches directories for a regex pattern while respecting your gitig
 
 | Options Id | Description | Type | Default Value |
 |-----|-----|-----|-----|
-| version | Version of ripgrep to install from GitHub releases e.g. 14.1.1 | string | latest |
+| version | Version of ripgrep to install from GitHub releases e.g. 14.1.1 (without 'v' prefix) | string | latest |
 
 
 
