@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Variables
-REPO_OWNER="rtk-ai"
+REPO_OWNER="cds-snc"
 REPO_NAME="rtk"
 BINARY_NAME="rtk"
 RTK_VERSION="${VERSION:-"latest"}"

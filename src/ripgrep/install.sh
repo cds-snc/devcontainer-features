@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Variables
-REPO_OWNER="BurntSushi"
+REPO_OWNER="cds-snc"
 REPO_NAME="ripgrep"
 BINARY_NAME="rg"
 RIPGREP_VERSION="${VERSION:-"latest"}"
