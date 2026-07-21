@@ -29,6 +29,7 @@ export DEBIAN_FRONTEND=noninteractive
 
 ONEPASSWORD_GPG_KEY="3FEF9748469ADBE15DA7CA80AC2D62742012EA22"
 PRODUCT_HISTORY_URL="https://app-updates.agilebits.com/product_history/CLI2"
+KEYSERVERS="keyserver.ubuntu.com hkps://keys.openpgp.org"
 
 # Install dependencies
 check_packages apt-transport-https curl ca-certificates gnupg2 dirmngr unzip
@@ -62,8 +63,9 @@ if ! PRODUCT_HISTORY_PAGE=$(curl -fsSL "$PRODUCT_HISTORY_URL"); then
     exit 1
 fi
 
+# URL format is expected from the official CLI2 product history release links.
 DOWNLOAD_URL=$(printf '%s\n' "$PRODUCT_HISTORY_PAGE" \
-    | grep -oE "https://cache\\.agilebits\\.com/dist/1P/op2/pkg/v[0-9]+\\.[0-9]+\\.[0-9]+/op_linux_${OP_ARCH}_v[0-9]+\\.[0-9]+\\.[0-9]+\\.zip" \
+    | grep -oE "https://cache\\.agilebits\\.com/dist/1P/op2/pkg/v[^\"']+/op_linux_${OP_ARCH}_v[^\"']+\\.zip" \
     | head -n 1)
 
 if [ -z "$DOWNLOAD_URL" ]; then
@@ -80,22 +82,30 @@ if ! unzip -q op.zip; then
     exit 1
 fi
 
-if ! gpg --batch --keyserver keyserver.ubuntu.com --receive-keys "$ONEPASSWORD_GPG_KEY"; then
-    echo "Failed to retrieve 1Password GPG key from keyserver.ubuntu.com"
+KEY_RETRIEVED=false
+for KEYSERVER in $KEYSERVERS; do
+    if gpg --batch --keyserver "$KEYSERVER" --receive-keys "$ONEPASSWORD_GPG_KEY"; then
+        KEY_RETRIEVED=true
+        break
+    fi
+done
+
+if [ "$KEY_RETRIEVED" = false ]; then
+    echo "Failed to retrieve 1Password GPG key from configured keyservers"
     exit 1
 fi
+
 if ! gpg --batch --verify op.sig op; then
     echo "GPG signature verification failed for 1Password CLI binary"
     exit 1
 fi
 
-install -m 0755 op /usr/local/bin/op
+install -m 2755 op /usr/local/bin/op
 
 if ! getent group onepassword-cli > /dev/null; then
     groupadd onepassword-cli
 fi
 
 chgrp onepassword-cli /usr/local/bin/op
-chmod g+s /usr/local/bin/op
 
 op --version
