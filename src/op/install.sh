@@ -63,7 +63,7 @@ if ! PRODUCT_HISTORY_PAGE=$(curl -fsSL --show-error "$PRODUCT_HISTORY_URL"); the
     exit 1
 fi
 
-# URL format is expected from official CLI2 history links, for example:
+# The URL format follows the official CLI2 history link pattern, for example:
 # https://cache.agilebits.com/dist/1P/op2/pkg/v2.35.0/op_linux_amd64_v2.35.0.zip
 DOWNLOAD_URL=$(printf '%s\n' "$PRODUCT_HISTORY_PAGE" \
     | grep -oE "https://cache\\.agilebits\\.com/dist/1P/op2/pkg/v[0-9]+\\.[0-9]+\\.[0-9]+/op_linux_${OP_ARCH}_v[0-9]+\\.[0-9]+\\.[0-9]+\\.zip" \
@@ -113,7 +113,7 @@ if ! getent group onepassword-cli > /dev/null; then
     groupadd onepassword-cli
 fi
 
-# Setgid bit ensures op inherits onepassword-cli group permissions as required by 1Password.
+# Setgid ensures op runs with onepassword-cli group access required for secure credential store access.
 install -m 2755 -g onepassword-cli op /usr/local/bin/op
 
 op --version
