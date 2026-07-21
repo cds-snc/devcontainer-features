@@ -1,6 +1,4 @@
 name: "CI - Test Features"
-permissions:
-  contents: read
 on:
   push:
     branches:
@@ -19,6 +17,7 @@ jobs:
       matrix:
         features:
           - op
+          - ripgrep
           - rtk
           - uv
           - zizmor
