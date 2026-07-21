@@ -28,7 +28,6 @@ check_packages() {
 export DEBIAN_FRONTEND=noninteractive
 
 ONEPASSWORD_GPG_KEY="3FEF9748469ADBE15DA7CA80AC2D62742012EA22"
-PRODUCT_HISTORY_URL="https://app-updates.agilebits.com/product_history/CLI2"
 KEYSERVERS="keyserver.ubuntu.com hkps://keys.openpgp.org"
 
 # Install dependencies
@@ -58,35 +57,24 @@ TMP_DIR=$(mktemp -d -t op-install.XXXXXX)
 trap 'rm -rf "$TMP_DIR"' EXIT
 cd "$TMP_DIR" || exit 1
 
-if ! PRODUCT_HISTORY_PAGE=$(curl -fsSL --show-error "$PRODUCT_HISTORY_URL"); then
-    echo "Unable to fetch 1Password CLI release history from: $PRODUCT_HISTORY_URL"
-    exit 1
-fi
-
-# The URL format follows the official CLI2 history link pattern, for example:
-# https://cache.agilebits.com/dist/1P/op2/pkg/v2.35.0/op_linux_amd64_v2.35.0.zip
-DOWNLOAD_URL=$(printf '%s\n' "$PRODUCT_HISTORY_PAGE" \
-    | grep -oE "https://cache\\.agilebits\\.com/dist/1P/op2/pkg/v[0-9]+\\.[0-9]+\\.[0-9]+/op_linux_${OP_ARCH}_v[0-9]+\\.[0-9]+\\.[0-9]+\\.zip" \
-    | head -n 1)
-
-if [ -z "$DOWNLOAD_URL" ]; then
-    echo "Unable to determine the latest 1Password CLI release URL for architecture: $OP_ARCH"
-    exit 1
-fi
-case "$DOWNLOAD_URL" in
-    https://cache.agilebits.com/*)
-        ;;
-    *)
-        echo "Unexpected 1Password CLI download URL: $DOWNLOAD_URL"
+VERSION="${VERSION:-}"
+if [ -z "$VERSION" ]; then
+    echo "No VERSION provided, fetching latest from product history page..."
+    PRODUCT_HISTORY_URL="https://app-updates.agilebits.com/product_history/CLI2"
+    if ! PRODUCT_HISTORY=$(curl -fsSL --show-error "$PRODUCT_HISTORY_URL"); then
+        echo "Unable to fetch 1Password CLI product history from: $PRODUCT_HISTORY_URL"
         exit 1
-        ;;
-esac
-DIRECTORY_VERSION=$(printf '%s\n' "$DOWNLOAD_URL" | sed -nE 's#.*/pkg/v([0-9]+\.[0-9]+\.[0-9]+)/op_linux_.*#\1#p')
-FILENAME_VERSION=$(printf '%s\n' "$DOWNLOAD_URL" | sed -nE 's#.*/op_linux_[^_]+_v([0-9]+\.[0-9]+\.[0-9]+)\.zip#\1#p')
-if [ -z "$DIRECTORY_VERSION" ] || [ "$DIRECTORY_VERSION" != "$FILENAME_VERSION" ]; then
-    echo "Invalid 1Password CLI release URL version format: $DOWNLOAD_URL"
-    exit 1
+    fi
+    # Extract the latest version from the JSON response (first entry is latest)
+    VERSION=$(printf '%s\n' "$PRODUCT_HISTORY" | grep -oP '"version":\s*"\K[^"]+' | head -1)
+    if [ -z "$VERSION" ]; then
+        echo "Unable to determine the latest 1Password CLI version from product history"
+        exit 1
+    fi
+    echo "Latest version found: $VERSION"
 fi
+
+DOWNLOAD_URL="https://cache.agilebits.com/dist/1P/op2/pkg/${VERSION}/op_linux_${OP_ARCH}_${VERSION}.zip"
 
 if ! curl -fsSL --show-error "$DOWNLOAD_URL" -o op.zip; then
     echo "Failed to download 1Password CLI from: $DOWNLOAD_URL"
