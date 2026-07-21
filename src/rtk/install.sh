@@ -84,9 +84,6 @@ chmod +x /usr/local/bin/rtk
 cd - || exit
 rm -rf "$TMP_DIR"
 
-# Clean up
-rm -rf /var/lib/apt/lists/*
-
 # Verify installation
 echo "Verifying installation..."
 rtk --version

@@ -98,9 +98,6 @@ chmod +x /usr/local/bin/${BINARY_NAME}
 cd - || exit
 rm -rf "$TMP_DIR"
 
-# Clean up
-rm -rf /var/lib/apt/lists/*
-
 # Verify installation
 echo "Verifying installation..."
 zizmor --version

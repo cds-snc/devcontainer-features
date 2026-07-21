@@ -39,4 +39,4 @@ echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/1pass
 # Update lists
 apt-get update -yq
 
-apt-get install -yq 1password-cli  || return 1
+apt-get install -yq 1password-cli  || exit 1
