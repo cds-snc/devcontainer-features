@@ -58,14 +58,15 @@ TMP_DIR=$(mktemp -d)
 trap 'rm -rf "$TMP_DIR"' EXIT
 cd "$TMP_DIR" || exit 1
 
-if ! PRODUCT_HISTORY_PAGE=$(curl -fsSL "$PRODUCT_HISTORY_URL"); then
+if ! PRODUCT_HISTORY_PAGE=$(curl -fsSL --show-error "$PRODUCT_HISTORY_URL"); then
     echo "Unable to fetch 1Password CLI release history from: $PRODUCT_HISTORY_URL"
     exit 1
 fi
 
-# URL format is expected from the official CLI2 product history release links.
+# URL format is expected from official CLI2 history links, for example:
+# https://cache.agilebits.com/dist/1P/op2/pkg/v2.35.0/op_linux_amd64_v2.35.0.zip
 DOWNLOAD_URL=$(printf '%s\n' "$PRODUCT_HISTORY_PAGE" \
-    | grep -oE "https://cache\\.agilebits\\.com/dist/1P/op2/pkg/v[^\"']+/op_linux_${OP_ARCH}_v[^\"']+\\.zip" \
+    | grep -oE "https://cache\\.agilebits\\.com/dist/1P/op2/pkg/v[0-9A-Za-z._-]+/op_linux_${OP_ARCH}_v[0-9A-Za-z._-]+\\.zip" \
     | head -n 1)
 
 if [ -z "$DOWNLOAD_URL" ]; then
@@ -81,7 +82,7 @@ case "$DOWNLOAD_URL" in
         ;;
 esac
 
-if ! curl -fsSL "$DOWNLOAD_URL" -o op.zip; then
+if ! curl -fsSL --show-error "$DOWNLOAD_URL" -o op.zip; then
     echo "Failed to download 1Password CLI from: $DOWNLOAD_URL"
     exit 1
 fi
@@ -108,13 +109,12 @@ if ! gpg --batch --verify op.sig op; then
     exit 1
 fi
 
-# Setgid bit ensures op inherits onepassword-cli group permissions as required by 1Password.
-install -m 2755 op /usr/local/bin/op
-
 if ! getent group onepassword-cli > /dev/null; then
     groupadd onepassword-cli
 fi
 
+# Setgid bit ensures op inherits onepassword-cli group permissions as required by 1Password.
+install -m 2755 op /usr/local/bin/op
 chgrp onepassword-cli /usr/local/bin/op
 
 op --version
