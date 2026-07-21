@@ -15,7 +15,7 @@
 
 | Options Id | Description | Type | Default Value |
 |-----|-----|-----|-----|
-
+| version | Version of 1Password CLI to install from GitHub releases e.g. v2.35.0 (with 'v' prefix) | string | v2.35.0 |
 
 
 
