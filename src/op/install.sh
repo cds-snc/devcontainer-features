@@ -72,6 +72,14 @@ if [ -z "$DOWNLOAD_URL" ]; then
     echo "Unable to determine the latest 1Password CLI release URL for architecture: $OP_ARCH"
     exit 1
 fi
+case "$DOWNLOAD_URL" in
+    https://cache.agilebits.com/*)
+        ;;
+    *)
+        echo "Unexpected 1Password CLI download URL: $DOWNLOAD_URL"
+        exit 1
+        ;;
+esac
 
 if ! curl -fsSL "$DOWNLOAD_URL" -o op.zip; then
     echo "Failed to download 1Password CLI from: $DOWNLOAD_URL"
@@ -100,6 +108,7 @@ if ! gpg --batch --verify op.sig op; then
     exit 1
 fi
 
+# Setgid bit ensures op inherits onepassword-cli group permissions as required by 1Password.
 install -m 2755 op /usr/local/bin/op
 
 if ! getent group onepassword-cli > /dev/null; then
