@@ -27,10 +27,10 @@ jobs:
           - ubuntu:latest
           - mcr.microsoft.com/devcontainers/base:ubuntu
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
 
       - name: "Install latest devcontainer CLI"
-        run: npm install -g @devcontainers/cli
+        run: npm install -g @devcontainers/cli@0.87.0
 
       - name: "Generating tests for '${{ matrix.features }}' against '${{ matrix.baseImage }}'"
         run: devcontainer features test -f ${{ matrix.features }} -i ${{ matrix.baseImage }} .
@@ -39,10 +39,10 @@ jobs:
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
 
       - name: "Install latest devcontainer CLI"
-        run: npm install -g @devcontainers/cli
+        run: npm install -g @devcontainers/cli@0.87.0
 
       - name: "Testing global scenarios"
         run: devcontainer features test --global-scenarios-only .
