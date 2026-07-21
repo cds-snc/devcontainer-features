@@ -75,13 +75,19 @@ if ! curl -fsSL "$DOWNLOAD_URL" -o op.zip; then
     echo "Failed to download 1Password CLI from: $DOWNLOAD_URL"
     exit 1
 fi
-unzip -q op.zip
+if ! unzip -q op.zip; then
+    echo "Failed to extract 1Password CLI archive"
+    exit 1
+fi
 
 if ! gpg --batch --keyserver keyserver.ubuntu.com --receive-keys "$ONEPASSWORD_GPG_KEY"; then
     echo "Failed to retrieve 1Password GPG key from keyserver.ubuntu.com"
     exit 1
 fi
-gpg --batch --verify op.sig op
+if ! gpg --batch --verify op.sig op; then
+    echo "GPG signature verification failed for 1Password CLI binary"
+    exit 1
+fi
 
 install -m 0755 op /usr/local/bin/op
 
