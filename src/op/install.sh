@@ -121,7 +121,7 @@ if ! getent group onepassword-cli > /dev/null; then
 fi
 
 # 1Password recommends setgid with onepassword-cli so op can securely access its credential store.
-install -m 2755 -g onepassword-cli op /usr/local/bin/op
+install -m 0755 -g onepassword-cli op /usr/local/bin/op
 chmod 2755 /usr/local/bin/op
 
 op --version
