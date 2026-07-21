@@ -27,16 +27,62 @@ check_packages() {
 
 export DEBIAN_FRONTEND=noninteractive
 
-# Source /etc/os-release to get OS info
-. /etc/os-release
+ONEPASSWORD_GPG_KEY="3FEF9748469ADBE15DA7CA80AC2D62742012EA22"
+PRODUCT_HISTORY_URL="https://app-updates.agilebits.com/product_history/CLI2"
 
 # Install dependencies
-check_packages apt-transport-https curl ca-certificates gnupg2 dirmngr
-# Import key safely (new 'signed-by' method rather than deprecated apt-key approach) and install
-curl -sSL https://downloads.1password.com/linux/keys/1password.asc | gpg --dearmor > /usr/share/keyrings/1password-archive-keyring.gpg
-echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/1password-archive-keyring.gpg] https://downloads.1password.com/linux/debian/$(dpkg --print-architecture) stable main" > /etc/apt/sources.list.d/1password.list
+check_packages apt-transport-https curl ca-certificates gnupg2 dirmngr unzip
 
-# Update lists
-apt-get update -yq
+ARCH="$(dpkg --print-architecture)"
+case "$ARCH" in
+    amd64)
+        OP_ARCH="amd64"
+        ;;
+    arm64)
+        OP_ARCH="arm64"
+        ;;
+    armhf)
+        OP_ARCH="arm"
+        ;;
+    i386)
+        OP_ARCH="386"
+        ;;
+    *)
+        echo "Unsupported architecture: $ARCH"
+        exit 1
+        ;;
+esac
 
-apt-get install -yq 1password-cli  || exit 1
+TMP_DIR=$(mktemp -d)
+cd "$TMP_DIR" || exit 1
+
+DOWNLOAD_URL=$(
+    curl -fsSL "$PRODUCT_HISTORY_URL" \
+    | grep -oE "https://cache\\.agilebits\\.com/dist/1P/op2/pkg/v[0-9]+\\.[0-9]+\\.[0-9]+/op_linux_${OP_ARCH}_v[0-9]+\\.[0-9]+\\.[0-9]+\\.zip" \
+    | head -n 1
+)
+
+if [ -z "$DOWNLOAD_URL" ]; then
+    echo "Unable to determine the latest 1Password CLI release URL for architecture: $OP_ARCH"
+    exit 1
+fi
+
+curl -fsSL "$DOWNLOAD_URL" -o op.zip
+unzip -q op.zip
+
+gpg --batch --keyserver keyserver.ubuntu.com --receive-keys "$ONEPASSWORD_GPG_KEY"
+gpg --batch --verify op.sig op
+
+install -m 0755 op /usr/local/bin/op
+
+if ! getent group onepassword-cli > /dev/null; then
+    groupadd onepassword-cli
+fi
+
+chgrp onepassword-cli /usr/local/bin/op
+chmod g+s /usr/local/bin/op
+
+op --version
+
+cd - > /dev/null || exit 1
+rm -rf "$TMP_DIR"
