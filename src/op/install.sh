@@ -54,23 +54,33 @@ case "$ARCH" in
 esac
 
 TMP_DIR=$(mktemp -d)
+trap 'rm -rf "$TMP_DIR"' EXIT
 cd "$TMP_DIR" || exit 1
 
-DOWNLOAD_URL=$(
-    curl -fsSL "$PRODUCT_HISTORY_URL" \
+if ! PRODUCT_HISTORY_PAGE=$(curl -fsSL "$PRODUCT_HISTORY_URL"); then
+    echo "Unable to fetch 1Password CLI release history from: $PRODUCT_HISTORY_URL"
+    exit 1
+fi
+
+DOWNLOAD_URL=$(printf '%s\n' "$PRODUCT_HISTORY_PAGE" \
     | grep -oE "https://cache\\.agilebits\\.com/dist/1P/op2/pkg/v[0-9]+\\.[0-9]+\\.[0-9]+/op_linux_${OP_ARCH}_v[0-9]+\\.[0-9]+\\.[0-9]+\\.zip" \
-    | head -n 1
-)
+    | head -n 1)
 
 if [ -z "$DOWNLOAD_URL" ]; then
     echo "Unable to determine the latest 1Password CLI release URL for architecture: $OP_ARCH"
     exit 1
 fi
 
-curl -fsSL "$DOWNLOAD_URL" -o op.zip
+if ! curl -fsSL "$DOWNLOAD_URL" -o op.zip; then
+    echo "Failed to download 1Password CLI from: $DOWNLOAD_URL"
+    exit 1
+fi
 unzip -q op.zip
 
-gpg --batch --keyserver keyserver.ubuntu.com --receive-keys "$ONEPASSWORD_GPG_KEY"
+if ! gpg --batch --keyserver keyserver.ubuntu.com --receive-keys "$ONEPASSWORD_GPG_KEY"; then
+    echo "Failed to retrieve 1Password GPG key from keyserver.ubuntu.com"
+    exit 1
+fi
 gpg --batch --verify op.sig op
 
 install -m 0755 op /usr/local/bin/op
@@ -83,6 +93,3 @@ chgrp onepassword-cli /usr/local/bin/op
 chmod g+s /usr/local/bin/op
 
 op --version
-
-cd - > /dev/null || exit 1
-rm -rf "$TMP_DIR"
