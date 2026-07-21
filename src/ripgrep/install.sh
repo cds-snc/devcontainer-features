@@ -45,6 +45,9 @@ else
     echo "Installing version from environment variable: $RIPGREP_VERSION"
 fi
 
+# Strip leading 'v' prefix from the version (GitHub API tags may include it)
+RIPGREP_VERSION="${RIPGREP_VERSION#v}"
+
 # Determine the OS and architecture
 OS=$(uname -s | tr '[:upper:]' '[:lower:]')
 ARCH=$(uname -m)
