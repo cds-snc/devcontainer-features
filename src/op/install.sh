@@ -58,15 +58,15 @@ trap 'rm -rf "$TMP_DIR"' EXIT
 cd "$TMP_DIR" || exit 1
 
 VERSION="${VERSION:-}"
-if [ -z "$VERSION" ]; then
-    echo "No VERSION provided, fetching latest from product history page..."
+if [ -z "$VERSION" ] || [ "$VERSION" = "latest" ]; then
+    echo "Fetching latest version from product history page..."
     PRODUCT_HISTORY_URL="https://app-updates.agilebits.com/product_history/CLI2"
     if ! PRODUCT_HISTORY=$(curl -fsSL --show-error "$PRODUCT_HISTORY_URL"); then
         echo "Unable to fetch 1Password CLI product history from: $PRODUCT_HISTORY_URL"
         exit 1
     fi
     # Extract the latest version from the JSON response (first entry is latest)
-    VERSION=$(printf '%s\n' "$PRODUCT_HISTORY" | grep -oP '"version":\s*"\K[^"]+' | head -1)
+    VERSION=$(printf '%s\n' "$PRODUCT_HISTORY" | grep -o '"version":"[^"]*' | head -1 | sed 's/"version":"//')
     if [ -z "$VERSION" ]; then
         echo "Unable to determine the latest 1Password CLI version from product history"
         exit 1
