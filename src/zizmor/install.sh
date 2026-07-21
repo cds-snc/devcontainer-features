@@ -1,9 +1,8 @@
 #!/usr/bin/env bash
 
 # Variables
-REPO_OWNER="cds-snc"
+REPO_OWNER="zizmorcore"
 REPO_NAME="zizmor"
-BINARY_NAME="zizmor"
 ZIZMOR_VERSION="${VERSION:-"latest"}"
 GITHUB_API_REPO_URL="https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/releases"
 
@@ -91,7 +90,7 @@ tar -xzf "zizmor.tar.gz"
 
 # Move the binary to /usr/local/bin
 echo "Installing zizmor..."
-mv "${BINARY_NAME}" /usr/local/bin/
+mv "zizmor" /usr/local/bin/
 chmod +x /usr/local/bin/${BINARY_NAME}
 
 # Cleanup

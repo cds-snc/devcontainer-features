@@ -1,9 +1,8 @@
 #!/usr/bin/env bash
 
 # Variables
-REPO_OWNER="cds-snc"
+REPO_OWNER="rtk-ai"
 REPO_NAME="rtk"
-BINARY_NAME="rtk"
 RTK_VERSION="${VERSION:-"latest"}"
 GITHUB_API_REPO_URL="https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/releases"
 
