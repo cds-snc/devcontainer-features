@@ -102,7 +102,7 @@ tar -xzf "${REPO_NAME}-${ARCH}-${OS}.tar.gz"
 
 # Move the binary to /usr/local/bin
 echo "Installing $BINARY_NAME"
-mv ${REPO_NAME}-${ARCH}-${OS}/* /usr/local/bin/
+mv "${REPO_NAME}-${ARCH}-${OS}"/* /usr/local/bin/
 
 
 # Cleanup

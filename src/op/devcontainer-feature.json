@@ -3,6 +3,7 @@
     "id": "op",
     "version": "1.0.0",
     "description": "1Password CLI",
+    "documentationURL": "https://developer.1password.com/docs/cli",
     "options": {},
     "installsAfter": [
         "ghcr.io/devcontainers/features/common-utils"
